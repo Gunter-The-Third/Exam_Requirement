@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Exam Grade Requirement Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 650px;
+      margin: 40px auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      background-color: #fafafa;
+    }
+    input, button, textarea {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      margin-top: 15px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .result {
+      margin-top: 25px;
+      background-color: #f1f1f1;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      margin-top: 10px;
+      border-collapse: collapse;
+    }
+    th, td {
+      text-align: center;
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+    th {
+      background-color: #eee;
+    }
+  </style>
+</head>
+<body>
+  <h2>Exam Grade Requirement Calculator</h2>
+
+  <label>Assignment 1 (e.g., 76/100):</label>
+  <input id="ass1" placeholder="Enter score and out-of, e.g., 76/100">
+
+  <label>Assignment 2 (e.g., 68/100):</label>
+  <input id="ass2" placeholder="Enter score and out-of, e.g., 68/100">
+
+  <label>Quiz Scores (comma-separated, out of 10):</label>
+  <textarea id="quizzes" placeholder="e.g., 4, 2.5, 8.5, 9.5, 9, 5"></textarea>
+
+  <button onclick="calculate()">Calculate Required Exam Grades</button>
+
+  <div class="result" id="output"></div>
+
+<script>
+  function calculate() {
+    const gradeBrackets = [
+      { label: "High Distinction (HD)", target: 85 },
+      { label: "Distinction (DN)", target: 75 },
+      { label: "Credit (CR)", target: 65 },
+      { label: "Pass (P)", target: 50 }
+    ];
+
+    const ass1Input = document.getElementById("ass1").value.trim();
+    const ass2Input = document.getElementById("ass2").value.trim();
+    const quizzesInput = document.getElementById("quizzes").value.trim();
+    const output = document.getElementById("output");
+
+    const [ass1Score, ass1OutOf] = ass1Input.split("/").map(Number);
+    const [ass2Score, ass2OutOf] = ass2Input.split("/").map(Number);
+
+    if (isNaN(ass1Score) || isNaN(ass1OutOf) || isNaN(ass2Score) || isNaN(ass2OutOf)) {
+      output.innerHTML = "❌ Please enter valid assignment scores in the format score/out-of.";
+      return;
+    }
+
+    let quizScores = quizzesInput
+      .split(",")
+      .map(q => parseFloat(q.trim()))
+      .filter(q => !isNaN(q));
+
+    if (quizScores.length === 0) {
+      output.innerHTML = "❌ Please enter at least one valid quiz score.";
+      return;
+    }
+
+    // Take best 8 quizzes (or all if less)
+    quizScores.sort((a, b) => b - a);
+    const bestQuizzes = quizScores.slice(0, 8);
+    const avgQuiz = bestQuizzes.reduce((sum, q) => sum + q, 0) / bestQuizzes.length;
+
+    // Assignment % (out of 20% each)
+    const ass1Pct = (ass1Score / ass1OutOf) * 20;
+    const ass2Pct = (ass2Score / ass2OutOf) * 20;
+    const quizPct = (avgQuiz / 10) * 20; // quizzes worth 20%
+
+    const totalWithQuizzes = ass1Pct + ass2Pct + quizPct;
+    const totalWithoutQuizzes = ass1Pct + ass2Pct;
+
+    // Display
+    let html = `
+      <strong>Assignment 1 Contribution:</strong> ${ass1Pct.toFixed(2)}%<br>
+      <strong>Assignment 2 Contribution:</strong> ${ass2Pct.toFixed(2)}%<br>
+      <strong>Quiz Contribution:</strong> ${quizPct.toFixed(2)}% (from ${bestQuizzes.length} quizzes)<br><br>
+      <strong>Total So Far (with quizzes):</strong> ${totalWithQuizzes.toFixed(2)}%<br>
+      <strong>Total So Far (without quizzes):</strong> ${totalWithoutQuizzes.toFixed(2)}%<br><br>
+
+      <table>
+        <tr>
+          <th>Grade</th>
+          <th>Required Exam %<br>(Exam = 40%)</th>
+          <th>Required Exam %<br>(Exam = 60%)</th>
+        </tr>
+    `;
+
+    for (const { label, target } of gradeBrackets) {
+      const need1 = (target - totalWithQuizzes) / 0.4;
+      const need2 = (target - totalWithoutQuizzes) / 0.6;
+
+      const note1 = need1 < 50 && need1 >= 0 ? " ⚠️ (hurdle is 50%)" : "";
+      const note2 = need2 < 50 && need2 >= 0 ? " ⚠️ (hurdle is 50%)" : "";
+
+      html += `
+        <tr>
+          <td>${label}</td>
+          <td>${need1 <= 100 ? need1.toFixed(2) + "%" + note1 : "Not possible"}</td>
+          <td>${need2 <= 100 ? need2.toFixed(2) + "%" + note2 : "Not possible"}</td>
+        </tr>
+      `;
+    }
+
+    html += "</table>";
+    output.innerHTML = html;
+  }
+</script>
+</body>
+</html>
