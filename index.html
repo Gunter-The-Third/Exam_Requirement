@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ENGR2711 Exam Grade Requirement Calculator</title>
+  <title>Exam Grade Requirement Calculator</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -66,7 +66,6 @@
   <button onclick="calculate()">Calculate Required Exam Grades</button>
 
   <div class="result" id="output"></div>
-
 <script>
   function calculate() {
     const gradeBrackets = [
@@ -112,7 +111,6 @@
     const totalWithQuizzes = ass1Pct + ass2Pct + quizPct;
     const totalWithoutQuizzes = ass1Pct + ass2Pct;
 
-    // Display
     let html = `
       <strong>Assignment 1 Contribution:</strong> ${ass1Pct.toFixed(2)}%<br>
       <strong>Assignment 2 Contribution:</strong> ${ass2Pct.toFixed(2)}%<br>
@@ -123,23 +121,28 @@
       <table>
         <tr>
           <th>Grade</th>
-          <th>Required Exam %<br>(Exam = 40%)</th>
-          <th>Required Exam %<br>(Exam = 60%)</th>
+          <th>Required Exam % (minimum of two methods)</th>
         </tr>
     `;
 
     for (const { label, target } of gradeBrackets) {
-      const need1 = (target - totalWithQuizzes) / 0.4;
-      const need2 = (target - totalWithoutQuizzes) / 0.6;
+      const needWithQuiz = (target - totalWithQuizzes) / 0.4;
+      const needWithoutQuiz = (target - totalWithoutQuizzes) / 0.6;
+      let required = Math.min(needWithQuiz, needWithoutQuiz);
 
-      const note1 = need1 < 50 && need1 >= 0 ? " ⚠️ (hurdle is 50%)" : "";
-      const note2 = need2 < 50 && need2 >= 0 ? " ⚠️ (hurdle is 50%)" : "";
+      let display;
+      if (required > 100) {
+        display = "Not possible";
+      } else if (required < 50) {
+        display = "50% (hurdle)";
+      } else {
+        display = required.toFixed(2) + "%";
+      }
 
       html += `
         <tr>
           <td>${label}</td>
-          <td>${need1 <= 100 ? need1.toFixed(2) + "%" + note1 : "Not possible"}</td>
-          <td>${need2 <= 100 ? need2.toFixed(2) + "%" + note2 : "Not possible"}</td>
+          <td>${display}</td>
         </tr>
       `;
     }
